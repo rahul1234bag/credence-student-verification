@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Credence | Student Credentials</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">✦</div>
+            <span>Credence</span>
+        </div>
+
+        <p class="menu-label">Main menu</p>
+        <a class="menu-item selected" href="#dashboard">▦ &nbsp; Dashboard</a>
+        <a class="menu-item" href="#students">♙ &nbsp; Students</a>
+        <a class="menu-item" href="#certificates">▤ &nbsp; Certificates</a>
+        <a class="menu-item" href="#verify">✓ &nbsp; Verification</a>
+        <a class="menu-item" href="#history">◷ &nbsp; History</a>
+
+        <div class="sidebar-note">
+            <strong>Demo system</strong><br>
+            Python Flask<br>
+            SQLite database
+        </div>
+    </aside>
+
+    <main class="main">
+        <header class="topbar">
+            <span>Institution portal / Dashboard</span>
+            <div class="admin">
+                <div class="avatar">AD</div>
+                Administrator
+            </div>
+        </header>
+
+        <div class="content" id="dashboard">
+            <section class="welcome">
+                <div>
+                    <div class="eyebrow">Student identity platform</div>
+                    <h1>Credential dashboard</h1>
+                    <p class="muted">
+                        Manage student identities and digital certificates.
+                    </p>
+                </div>
+                <div class="status">● &nbsp; System ready</div>
+            </section>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <section class="stats">
+                <div class="stat-card">
+                    <div class="stat-label">Students found</div>
+                    <div class="stat-number">{{ students|length }}</div>
+                    <div class="stat-help">Matching student records</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">Certificates found</div>
+                    <div class="stat-number">{{ certificates|length }}</div>
+                    <div class="stat-help">Matching credentials</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-label">Security check</div>
+                    <div class="stat-number">SHA-256</div>
+                    <div class="stat-help">Certificate fingerprint method</div>
+                </div>
+            </section>
+
+            <section class="panel search-panel">
+                <div>
+                    <h2>Search records</h2>
+                    <p class="panel-description">
+                        Search by student name, ID, programme, or certificate.
+                    </p>
+                </div>
+
+                <form action="{{ url_for('home') }}" method="get"
+                      class="search-form">
+                    <input name="q" value="{{ search_text }}"
+                           placeholder="Type to search…">
+                    <button type="submit">Search</button>
+                    <a class="button secondary"
+                       href="{{ url_for('home') }}">Clear</a>
+                </form>
+            </section>
+
+            <section class="two-columns">
+                <div class="panel" id="students">
+                    <h2>Add student</h2>
+                    <p class="panel-description">
+                        Create a student identity record.
+                    </p>
+
+                    <form action="{{ url_for('add_student') }}" method="post">
+                        <label for="student_id">Student ID</label>
+                        <input id="student_id" name="student_id"
+                               placeholder="STU-2026-004" required>
+
+                        <label for="name">Full name</label>
+                        <input id="name" name="name"
+                               placeholder="Student name" required>
+
+                        <label for="email">Email address</label>
+                        <input id="email" name="email" type="email"
+                               placeholder="student@example.edu" required>
+
+                        <label for="programme">Programme</label>
+                        <input id="programme" name="programme"
+                               placeholder="B.Sc. Computer Science" required>
+
+                        <button type="submit">＋ Save student</button>
+                    </form>
+                </div>
+
+                <div class="panel" id="certificates">
+                    <h2>Issue certificate</h2>
+                    <p class="panel-description">
+                        Issue a credential linked to a registered student.
+                    </p>
+
+                    <form action="{{ url_for('issue_certificate') }}"
+                          method="post">
+                        <label for="certificate_student">Select student</label>
+                        <select id="certificate_student" name="student_id"
+                                required>
+                            <option value="">Choose a student</option>
+                            {% for student in students %}
+                                <option value="{{ student['student_id'] }}">
+                                    {{ student['name'] }} —
+                                    {{ student['student_id'] }}
+                                </option>
+                            {% endfor %}
+                        </select>
+
+                        <label for="title">Certificate title</label>
+                        <input id="title" name="title"
+                               placeholder="Degree or course name" required>
+
+                        <label for="award_date">Award date</label>
+                        <input id="award_date" name="award_date" type="date"
+                               value="{{ today }}" required>
+
+                        <button type="submit">Issue certificate</button>
+                    </form>
+                </div>
+            </section>
+
+            <section class="panel verify-panel" id="verify">
+                <h2>Verify a certificate</h2>
+                <p class="panel-description">
+                    Check its ID, current status, and fingerprint.
+                </p>
+
+                <form action="{{ url_for('verify_certificate') }}"
+                      method="post" class="verify-form">
+                    <input name="certificate_id"
+                           placeholder="Example: CRD-7F2A91C4" required>
+                    <button type="submit">✓ Verify credential</button>
+                </form>
+            </section>
+
+            <section class="panel">
+                <div class="panel-heading">
+                    <div>
+                        <h2>Student directory</h2>
+                        <p class="panel-description">
+                            Registered student identity records.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Student ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Programme</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                                <tr>
+                                    <td class="id-tag">
+                                        {{ student['student_id'] }}
+                                    </td>
+                                    <td>{{ student['name'] }}</td>
+                                    <td>{{ student['email'] }}</td>
+                                    <td>{{ student['programme'] }}</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="4">No students found.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="panel">
+                <div class="panel-heading">
+                    <div>
+                        <h2>Certificates</h2>
+                        <p class="panel-description">
+                            QR code, status, and revocation controls.
+                        </p>
+                    </div>
+
+                    <a class="button secondary"
+                       href="{{ url_for('export_certificates') }}">
+                        Download CSV
+                    </a>
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>QR</th>
+                                <th>Certificate ID</th>
+                                <th>Student</th>
+                                <th>Title</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for certificate in certificates %}
+                                <tr>
+                                    <td>
+                                        <img class="qr-image"
+                                             src="{{ url_for(
+                                                'static',
+                                                filename='qr/' +
+                                                certificate['certificate_id'] +
+                                                '.png'
+                                             ) }}"
+                                             alt="Certificate QR code">
+                                    </td>
+                                    <td class="id-tag">
+                                        {{ certificate['certificate_id'] }}
+                                    </td>
+                                    <td>{{ certificate['student_name'] }}</td>
+                                    <td>{{ certificate['title'] }}</td>
+                                    <td>{{ certificate['award_date'] }}</td>
+                                    <td>
+                                        {% if certificate['status'] == 'Valid' %}
+                                            <span class="badge valid">Valid</span>
+                                        {% else %}
+                                            <span class="badge revoked">Revoked</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if certificate['status'] == 'Valid' %}
+                                            <form
+                                                action="{{ url_for('revoke_certificate') }}"
+                                                method="post"
+                                                class="revoke-form">
+                                                <input type="hidden"
+                                                       name="certificate_id"
+                                                       value="{{ certificate['certificate_id'] }}">
+                                                <input name="reason"
+                                                       placeholder="Reason"
+                                                       required>
+                                                <button class="danger-button"
+                                                        type="submit">
+                                                    Revoke
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            {{ certificate['revoked_reason'] }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="7">No certificates found.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="panel" id="history">
+                <h2>Verification history</h2>
+                <p class="panel-description">
+                    Latest certificate checks recorded by the system.
+                </p>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Certificate ID</th>
+                                <th>Result</th>
+                                <th>Checked at</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in verification_logs %}
+                                <tr>
+                                    <td class="id-tag">
+                                        {{ log['certificate_id'] }}
+                                    </td>
+                                    <td>{{ log['result'] }}</td>
+                                    <td>{{ log['checked_at'] }}</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="3">
+                                        No verification checks yet.
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <p class="footer-note">
+                Credence demo · Flask backend · SQLite database
+            </p>
+        </div>
+    </main>
+</div>
+</body>
+</html>
